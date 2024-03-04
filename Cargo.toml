@@ -1,0 +1,22 @@
+[package]
+name = "rand-functors"
+version = "0.1.0"
+authors = ["Alex Steele"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/ADSteele916/rand-functors"
+description = """
+A zero-cost abstraction for sampling from and enumerating the outcomes of a random process using the same code.
+"""
+keywords = ["random", "rng"]
+categories = ["algorithms", "science"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rand = "0.8.5"
+
+[dev-dependencies]
+ahash = "0.8.11"
+rand_chacha = "0.3.1"
