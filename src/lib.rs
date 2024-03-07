@@ -91,9 +91,8 @@ pub trait RandomVariable: Sized
 where
     Standard: Distribution<Self>,
 {
-    /// Produce an [`ExactSizeIterator`] containing all possible values of this
-    /// type.
-    fn sample_space() -> impl ExactSizeIterator<Item = Self>;
+    /// Produce an [`Iterator`] containing all possible values of this type.
+    fn sample_space() -> impl Iterator<Item = Self>;
 }
 
 /// A container used by a [`RandomStrategy`] during computations.
