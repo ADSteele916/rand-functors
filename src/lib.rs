@@ -87,6 +87,41 @@ pub trait RandomStrategy {
 /// **not** be implemented for [`Option<T>`], as the probability of [`None`]
 /// being sampled is 0.5, regardless of the cardinality of the sample space of
 /// `T`.
+///
+/// # Implementing `RandomVariable`
+///
+/// Neither `Distribution<T> for Standard` nor `RandomVariable for T` are
+/// derivable. However, implementations for simple structs tends to follow a
+/// pattern. [`Distribution<Self>`] implementations will typically call
+/// `self.sample(rng)` for each field of the struct. `RandomVariable`
+/// implementations will typically use [`Iterator::flat_map`] to create a
+/// Cartesian product of all the sample spaces of the struct's fields.
+/// ```
+/// use rand::distributions::Standard;
+/// use rand::prelude::*;
+/// use rand_functors::RandomVariable;
+///
+/// #[derive(Clone, Debug, Eq, Hash, PartialEq)]
+/// struct Coordinate {
+///     x: u8,
+///     y: u8,
+/// }
+///
+/// impl Distribution<Coordinate> for Standard {
+///     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Coordinate {
+///         Coordinate {
+///             x: self.sample(rng),
+///             y: self.sample(rng),
+///         }
+///     }
+/// }
+///
+/// impl RandomVariable for Coordinate {
+///     fn sample_space() -> impl Iterator<Item = Self> {
+///         u8::sample_space().flat_map(|x| u8::sample_space().map(move |y| Coordinate { x, y }))
+///     }
+/// }
+/// ```
 pub trait RandomVariable: Sized
 where
     Standard: Distribution<Self>,
