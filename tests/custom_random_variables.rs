@@ -36,8 +36,8 @@ where
     }
 }
 
-fn dummy_random_process<R: RandomStrategy>(rng: &mut impl Rng) -> R::Functor<Pair<bool, u8>> {
-    R::fmap_rand(R::Functor::pure(()), rng, |_, pair| pair)
+fn dummy_random_process<S: RandomStrategy>(rng: &mut impl Rng) -> S::Functor<Pair<bool, u8>> {
+    S::fmap_rand(Functor::pure(()), rng, |_, pair| pair)
 }
 
 #[test]

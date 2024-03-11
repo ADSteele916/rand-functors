@@ -10,20 +10,20 @@ pub struct State {
     b: [u8; 2],
 }
 
-fn random_process<H: RandomStrategy>(rng: &mut impl Rng, mut s: State) -> H::Functor<State> {
+fn random_process<S: RandomStrategy>(rng: &mut impl Rng, mut s: State) -> S::Functor<State> {
     s.a += 2;
-    let mut sc = H::Functor::pure(s);
-    sc = H::fmap_rand(sc, rng, |mut s, r| {
+    let mut sc = Functor::pure(s);
+    sc = S::fmap_rand(sc, rng, |mut s, r| {
         if r {
             s.a -= 1
         }
         s
     });
-    sc = H::fmap_rand(sc, rng, |mut s, r| {
+    sc = S::fmap_rand(sc, rng, |mut s, r| {
         s.b[0] = s.b[0].wrapping_add(r);
         s
     });
-    H::fmap_rand(sc, rng, |mut s, r| {
+    S::fmap_rand(sc, rng, |mut s, r| {
         s.a = s.a.wrapping_add(r);
         s
     })
