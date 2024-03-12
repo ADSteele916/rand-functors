@@ -5,12 +5,15 @@ authors = ["Alex Steele"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/ADSteele916/rand-functors"
+homepage = "https://github.com/ADSteele916/rand-functors"
 description = """
 A zero-cost abstraction for sampling from and enumerating the outcomes of a random process using the same code.
 """
 keywords = ["random", "rng"]
 categories = ["algorithms", "science"]
 edition = "2021"
+rust-version = "1.76.0"
+include = ["src/", "LICENSE-*", "README.md"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
