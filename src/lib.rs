@@ -40,11 +40,11 @@
 #![warn(clippy::cargo)]
 #![warn(missing_docs)]
 
-pub use handlers::*;
+pub use strategies::*;
 
 mod functors;
-mod handlers;
 mod random_variables;
+mod strategies;
 
 use std::hash::Hash;
 
