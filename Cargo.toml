@@ -2,7 +2,7 @@
 name = "rand-functors"
 version = "0.1.0"
 authors = ["Alex Steele"]
-license = "MIT"
+license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/ADSteele916/rand-functors"
 description = """
