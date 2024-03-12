@@ -1,6 +1,7 @@
 //! `rand-functors` provides an abstraction over different ways of evaluating
 //! random processes expressed as functions of both deterministic and stochastic
-//! data.
+//! data. This is achieved using a combination of a type-based version of the
+//! Strategy pattern and functional programming's Functor pattern.
 //!
 //! A motivating problem for this crate is the code duplication present across
 //! these two functions modelling the same random process:
@@ -21,6 +22,14 @@
 //!     out
 //! }
 //! ```
+//! While these functions may appear different, the same random process is
+//! embedded in both of them. A random `u8` is added to `state` and then, if a
+//! random `bool` is `true`, the state will be set to itself modulo 3.
+//!
+//! This redundant implementation of the random process could pose issues during
+//! a refactor. If one decides to change the `%= 3` to a `%= 5` in `next_state`,
+//! he or she will need to make the corresponding update in `next_states`.
+//!
 //! Using `rand-functors`, these two functions can be combined as:
 //! ```
 //! use rand::prelude::*;
@@ -34,8 +43,20 @@
 //!     out
 //! }
 //! ```
+//! This new implementation makes `next_state` generic over a [`RandomStrategy`]
+//! `S`. Its return type is also changed to the [`Functor`] associated with `S`.
+//! Inside, `state` is converted from `u8` to `S::Functor<u8>`. The remainder of
+//! the function is essentially the same as the original `next_state`, but each
+//! operation a random sample is now wrapped in a call to `S::fmap_rand`.
+//! Calling `next_state::<Sampler>(s)` would be equivalent to calling
+//! `next_state(s)` before. Similarly, one could call
+//! `next_state::<Enumerator>(s)` instead of using `next_states(s)`, which would
+//! require maintaining a separate implementation of the same core process.
+//!
 //! At present, `rand-functors` only supports random variables that are either
-//! of type [`bool`] or of a numeric type occupying no more than 16 bits.
+//! of type [`bool`] or of a numeric type occupying no more than 16 bits by
+//! default. However, it is possible to implement all the requisite traits for a
+//! custom data type.
 
 #![warn(clippy::cargo)]
 #![warn(missing_docs)]
@@ -52,11 +73,16 @@ use rand::distributions::Standard;
 use rand::prelude::*;
 
 /// A strategy for evaluating sequences of functions of random data.
+///
+/// Types implementing `RandomStrategy` are typically not constructed. For this
+/// same reason, they are typically unit structs. Behaviour should be specified
+/// at compile-time, to allow calls to `fmap_rand` and `Functor::fmap` to be
+/// properly inlined.
 pub trait RandomStrategy {
     /// The functor that this strategy operates on.
     ///
     /// Functions using a given strategy will typically return its associated
-    /// functor in the form `impl S::Functor<T>`.
+    /// functor in the form `S::Functor<T>`.
     type Functor<I: Inner>: Functor<I>;
 
     /// Using the strategy specified by the implementor, apply the given binary
@@ -87,6 +113,17 @@ pub trait RandomStrategy {
 /// **not** be implemented for [`Option<T>`], as the probability of [`None`]
 /// being sampled is 0.5, regardless of the cardinality of the sample space of
 /// `T`.
+///
+/// # Provided Implementations
+///
+/// This crate provides implementations of `RandomVariable` for [`bool`],
+/// [`u8`], [`i8`], [`u16`], and [`i16`].
+///
+/// Implementations for [`u32`] or [`i32`] would involve, at minimum, a 4 GiB
+/// allocation just to enumerate the outcomes of a random process with one
+/// `fmap_rand`. This is obviously intractable, so implementations are not
+/// provided for any types larger than 16 bits. The Newtype pattern can be used
+/// to get around this, if desired.
 ///
 /// # Implementing `RandomVariable`
 ///
@@ -127,10 +164,27 @@ where
     Standard: Distribution<Self>,
 {
     /// Produce an [`Iterator`] containing all possible values of this type.
+    ///
+    /// This iterator must be finite, though a trait bound of
+    /// [`ExactSizeIterator`] is not specified, to allow the use of
+    /// [`Iterator::flat_map`] in implementations of this trait.
     fn sample_space() -> impl Iterator<Item = Self>;
 }
 
 /// A container used by a [`RandomStrategy`] during computations.
+///
+/// In functional programming, the Functor pattern allows one to apply functions
+/// to values inside a container type, without changing the container's
+/// structure. A Functor must support the `fmap` method, which applies the
+/// function passed to it as a parameter to the contents of the Functor.
+///
+/// Additionally, this trait requires that implementors provide the `pure`
+/// associated function. This provides for a way to begin a series of `fmap` and
+/// `fmap_rand` operations. This requirement technically puts this crate's
+/// functors halfway between "normal" functors and applicative functors, as a
+/// subset of the former and a superset of the latter. However, implementing
+/// full applicative functors would be unnecessary for the sorts of computations
+/// that this crate focuses on.
 pub trait Functor<I: Inner> {
     /// The functor produced by [`Functor::fmap`].
     ///
