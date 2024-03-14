@@ -107,7 +107,7 @@ impl<S: BuildHasher + Default> RandomStrategy for Counter<S> {
     where
         Standard: Distribution<R>,
     {
-        let mut out = HashMap::default();
+        let mut out = Self::Functor::<B>::with_capacity_and_hasher(f.len(), Default::default());
         f.into_iter()
             .flat_map(|a| R::sample_space().map(move |r| (a.clone(), r)))
             .map(|((a, c), r)| (func(a, r), c))
