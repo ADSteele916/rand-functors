@@ -27,6 +27,20 @@ impl RandomStrategy for Sampler {
     }
 }
 
+#[inline(always)]
+fn vec_fmap_rand<A: Inner, B: Inner, R: RandomVariable, F: Fn(A, R) -> B>(
+    f: Vec<A>,
+    func: F,
+) -> Vec<B>
+where
+    Standard: Distribution<R>,
+{
+    f.into_iter()
+        .flat_map(|a| R::sample_space().map(move |r| (a.clone(), r)))
+        .map(|(a, r)| func(a, r))
+        .collect()
+}
+
 /// Produces a random subset (technically, submultiset) of possible outputs of
 /// the random process.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
@@ -56,13 +70,7 @@ impl<const N: usize> RandomStrategy for PopulationSampler<N> {
     where
         Standard: Distribution<R>,
     {
-        Self::shrink_to_capacity(
-            f.into_iter()
-                .flat_map(|a| R::sample_space().map(move |r| (a.clone(), r)))
-                .map(|(a, r)| func(a, r))
-                .collect(),
-            rand,
-        )
+        Self::shrink_to_capacity(vec_fmap_rand(f, func), rand)
     }
 }
 
@@ -82,10 +90,7 @@ impl RandomStrategy for Enumerator {
     where
         Standard: Distribution<R>,
     {
-        f.into_iter()
-            .flat_map(|a| R::sample_space().map(move |r| (a.clone(), r)))
-            .map(|(a, r)| func(a, r))
-            .collect()
+        vec_fmap_rand(f, func)
     }
 }
 
