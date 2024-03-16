@@ -17,13 +17,13 @@ impl RandomStrategy for Sampler {
 
     fn fmap_rand<A: Inner, B: Inner, R: RandomVariable, F: FnOnce(A, R) -> B>(
         f: Self::Functor<A>,
-        rand: &mut impl Rng,
+        rng: &mut impl Rng,
         func: F,
     ) -> Self::Functor<B>
     where
         Standard: Distribution<R>,
     {
-        func(f, rand.gen())
+        func(f, rng.gen())
     }
 }
 
@@ -47,12 +47,9 @@ where
 pub struct PopulationSampler<const N: usize>;
 
 impl<const N: usize> PopulationSampler<N> {
-    fn shrink_to_capacity<T: Inner>(
-        mut f: <Self as RandomStrategy>::Functor<T>,
-        rand: &mut impl Rng,
-    ) -> <Self as RandomStrategy>::Functor<T> {
+    fn shrink_to_capacity<T: Inner>(mut f: Vec<T>, rng: &mut impl Rng) -> Vec<T> {
         while f.len() > N {
-            let index = rand.gen_range(0..f.len());
+            let index = rng.gen_range(0..f.len());
             f.swap_remove(index);
         }
         f
@@ -64,13 +61,13 @@ impl<const N: usize> RandomStrategy for PopulationSampler<N> {
 
     fn fmap_rand<A: Inner, B: Inner, R: RandomVariable, F: Fn(A, R) -> B>(
         f: Self::Functor<A>,
-        rand: &mut impl Rng,
+        rng: &mut impl Rng,
         func: F,
     ) -> Self::Functor<B>
     where
         Standard: Distribution<R>,
     {
-        Self::shrink_to_capacity(vec_fmap_rand(f, func), rand)
+        Self::shrink_to_capacity(vec_fmap_rand(f, func), rng)
     }
 }
 
@@ -112,13 +109,13 @@ impl<S: BuildHasher + Default> RandomStrategy for Counter<S> {
     where
         Standard: Distribution<R>,
     {
-        let mut out = Self::Functor::<B>::with_capacity_and_hasher(f.len(), Default::default());
+        let mut new_functor = Self::Functor::with_capacity_and_hasher(f.len(), Default::default());
         f.into_iter()
             .flat_map(|a| R::sample_space().map(move |r| (a.clone(), r)))
             .map(|((a, c), r)| (func(a, r), c))
             .for_each(|(b, count)| {
-                *out.entry(b).or_insert(0) += count;
+                *new_functor.entry(b).or_insert(0) += count;
             });
-        out
+        new_functor
     }
 }

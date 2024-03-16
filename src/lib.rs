@@ -95,7 +95,7 @@ pub trait RandomStrategy {
     /// or some other type.
     fn fmap_rand<A: Inner, B: Inner, R: RandomVariable, F: Fn(A, R) -> B>(
         f: Self::Functor<A>,
-        rand: &mut impl Rng,
+        rng: &mut impl Rng,
         func: F,
     ) -> Self::Functor<B>
     where

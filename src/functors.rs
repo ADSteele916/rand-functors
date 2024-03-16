@@ -39,12 +39,13 @@ impl<I: Inner, S: BuildHasher + Default> Functor<I> for HashMap<I, usize, S> {
     fn fmap<O: Inner, F: Fn(I) -> O>(self, func: F) -> Self::Output<O> {
         // Constructing a new HashMap is necessary, as there may be fewer new
         // keys than old keys, which requires merging some or all counts.
-        let mut out = Self::Output::<O>::with_capacity_and_hasher(self.len(), Default::default());
+        let mut new_functor =
+            Self::Output::with_capacity_and_hasher(self.len(), Default::default());
         self.into_iter()
             .map(|(i, count)| (func(i), count))
             .for_each(|(o, count)| {
-                *out.entry(o).or_insert(0) += count;
+                *new_functor.entry(o).or_insert(0) += count;
             });
-        out
+        new_functor
     }
 }
