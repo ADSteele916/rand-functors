@@ -76,6 +76,13 @@ impl<const N: usize> RandomStrategy for PopulationSampler<N> {
 
 /// Produces all possible outputs of the random process, with repetition, as a
 /// [`Vec`].
+///
+/// `Enumerator` can be preferable to [`Counter`] in applications where the
+/// functions passed to `fmap_rand` do not typically produce the same value for
+/// different random inputs. In these cases, using [`Counter`], which is backed
+/// by a [`HashMap`] functor, will often not result in the expected space
+/// savings, as hash tables will over-allocate to maintain an acceptable load
+/// factor.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub struct Enumerator;
 
@@ -97,6 +104,11 @@ impl RandomStrategy for Enumerator {
 
 /// Produces all possible outputs of the random process, with repetition, stored
 /// in a [`HashMap`].
+///
+/// `Counter` is optimal in scenarios where certain operations will map many
+/// inputs to the same output. Examples include conditionally zeroing out a
+/// field of a struct or the use of functions like `saturating_add` or
+/// `saturating_mul`.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub struct Counter<S: BuildHasher + Default = RandomState> {
     phantom: PhantomData<S>,

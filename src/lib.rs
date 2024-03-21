@@ -92,7 +92,9 @@ pub trait RandomStrategy {
     /// Note that **no guarantees** are made about whether or how the `rand`
     /// parameter will be used. It may be sampled zero, one, or arbitrarily many
     /// times. It may be used to sample values of type `R`, of type [`usize`],
-    /// or some other type.
+    /// or some other type. If some model of the random number generator is
+    /// available, then that model should be responsible for enumerating
+    /// possible outcomes.
     fn fmap_rand<A: Inner, B: Inner, R: RandomVariable, F: Fn(A, R) -> B>(
         f: Self::Functor<A>,
         rng: &mut impl Rng,
