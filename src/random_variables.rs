@@ -1,6 +1,7 @@
 use crate::RandomVariable;
 
 impl RandomVariable for bool {
+    #[inline]
     fn sample_space() -> impl Iterator<Item = Self> {
         [false, true].into_iter()
     }
@@ -9,6 +10,7 @@ impl RandomVariable for bool {
 macro_rules! int_random_variable_impl {
     ($t:ty) => {
         impl RandomVariable for $t {
+            #[inline]
             fn sample_space() -> impl Iterator<Item = Self> {
                 Self::MIN..=Self::MAX
             }

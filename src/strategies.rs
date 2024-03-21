@@ -15,6 +15,7 @@ pub struct Sampler;
 impl RandomStrategy for Sampler {
     type Functor<I: Inner> = I;
 
+    #[inline]
     fn fmap_rand<A: Inner, B: Inner, R: RandomVariable, F: FnOnce(A, R) -> B>(
         f: Self::Functor<A>,
         rng: &mut impl Rng,
@@ -47,6 +48,7 @@ where
 pub struct PopulationSampler<const N: usize>;
 
 impl<const N: usize> PopulationSampler<N> {
+    #[inline(always)]
     fn shrink_to_capacity<T: Inner>(mut f: Vec<T>, rng: &mut impl Rng) -> Vec<T> {
         while f.len() > N {
             let index = rng.gen_range(0..f.len());
@@ -59,6 +61,7 @@ impl<const N: usize> PopulationSampler<N> {
 impl<const N: usize> RandomStrategy for PopulationSampler<N> {
     type Functor<I: Inner> = Vec<I>;
 
+    #[inline]
     fn fmap_rand<A: Inner, B: Inner, R: RandomVariable, F: Fn(A, R) -> B>(
         f: Self::Functor<A>,
         rng: &mut impl Rng,
@@ -79,6 +82,7 @@ pub struct Enumerator;
 impl RandomStrategy for Enumerator {
     type Functor<I: Inner> = Vec<I>;
 
+    #[inline]
     fn fmap_rand<A: Inner, B: Inner, R: RandomVariable, F: Fn(A, R) -> B>(
         f: Self::Functor<A>,
         _: &mut impl Rng,
@@ -101,6 +105,7 @@ pub struct Counter<S: BuildHasher + Default = RandomState> {
 impl<S: BuildHasher + Default> RandomStrategy for Counter<S> {
     type Functor<I: Inner> = HashMap<I, usize, S>;
 
+    #[inline]
     fn fmap_rand<A: Inner, B: Inner, R: RandomVariable, F: Fn(A, R) -> B>(
         f: Self::Functor<A>,
         _: &mut impl Rng,
