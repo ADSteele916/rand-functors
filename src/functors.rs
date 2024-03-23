@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::hash::BuildHasher;
 
 use crate::{Functor, Inner};
@@ -53,5 +53,19 @@ impl<I: Inner, S: BuildHasher + Default> Functor<I> for HashMap<I, usize, S> {
                 *new_functor.entry(o).or_insert(0) += count;
             });
         new_functor
+    }
+}
+
+impl<I: Inner, S: BuildHasher + Default> Functor<I> for HashSet<I, S> {
+    type Output<O: Inner> = HashSet<O, S>;
+
+    fn pure(i: I) -> Self {
+        let mut hs = Self::default();
+        hs.insert(i);
+        hs
+    }
+
+    fn fmap<O: Inner, F: Fn(I) -> O>(self, func: F) -> Self::Output<O> {
+        self.into_iter().map(func).collect()
     }
 }
