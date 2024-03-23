@@ -64,11 +64,13 @@
 pub use strategies::*;
 
 mod functors;
+mod random_variable_ranges;
 mod random_variables;
 mod strategies;
 
 use std::hash::Hash;
 
+use rand::distributions::uniform::{SampleRange, SampleUniform};
 use rand::distributions::Standard;
 use rand::prelude::*;
 
@@ -102,6 +104,25 @@ pub trait RandomStrategy {
     ) -> Self::Functor<B>
     where
         Standard: Distribution<R>;
+
+    /// Using the strategy specified by the implementor, apply the given binary
+    /// function to the given functor and an element of the sample space of a
+    /// [`RandomVariableRange`].
+    ///
+    /// Note that **no guarantees** are made about whether or how the `rand`
+    /// parameter will be used. It may be sampled zero, one, or arbitrarily many
+    /// times. It may be used to sample values of type `R`, of type [`usize`],
+    /// or some other type. If some model of the random number generator is
+    /// available, then that model should be responsible for enumerating
+    /// possible outcomes.
+    fn fmap_rand_range<A: Inner, B: Inner, R: RandomVariable + SampleUniform, F: Fn(A, R) -> B>(
+        f: Self::Functor<A>,
+        range: impl RandomVariableRange<R>,
+        rng: &mut impl Rng,
+        func: F,
+    ) -> Self::Functor<B>
+    where
+        Standard: Distribution<R>;
 }
 
 /// A type that is enumerable and can be sampled from uniformly.
@@ -118,14 +139,15 @@ pub trait RandomStrategy {
 ///
 /// # Provided Implementations
 ///
-/// This crate provides implementations of `RandomVariable` for [`bool`],
-/// [`u8`], [`i8`], [`u16`], and [`i16`].
+/// This crate provides implementations of `RandomVariable` for [`bool`] and all
+/// twelve built-in integer types.
 ///
-/// Implementations for [`u32`] or [`i32`] would involve, at minimum, a 4 GiB
-/// allocation just to enumerate the outcomes of a random process with one
-/// `fmap_rand`. This is obviously intractable, so implementations are not
-/// provided for any types larger than 16 bits. The Newtype pattern can be used
-/// to get around this, if desired.
+/// Implementations are provided for [`u32`], [`u64`], [`u128`], [`usize`],
+/// [`i32`], [`i64`], [`i128`], and [`isize`] strictly for sampling from ranges
+/// (through [`RandomStrategy::fmap_rand_range`]). The use of
+/// [`RandomStrategy::fmap_rand`] with a 32-bit integer `RandomVariable` would
+/// involve, at minimum, a 4 GiB allocation just to enumerate the outcomes of a
+/// random process. This is obviously intractable on current computers.
 ///
 /// # Implementing `RandomVariable`
 ///
@@ -171,6 +193,17 @@ where
     /// [`ExactSizeIterator`] is not specified, to allow the use of
     /// [`Iterator::flat_map`] in implementations of this trait.
     fn sample_space() -> impl Iterator<Item = Self>;
+}
+
+/// A (possibly inclusive) range of a [`RandomVariable`] that can be enumerated
+/// or sampled from.
+pub trait RandomVariableRange<R: RandomVariable + SampleUniform>
+where
+    Standard: Distribution<R>,
+    Self: SampleRange<R>,
+{
+    /// Produce an [`Iterator`] containing all possible values in this range.
+    fn sample_space(&self) -> impl Iterator<Item = R>;
 }
 
 /// A container used by a [`RandomStrategy`] during computations.

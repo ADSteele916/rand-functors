@@ -2,10 +2,11 @@ use std::collections::HashMap;
 use std::hash::{BuildHasher, RandomState};
 use std::marker::PhantomData;
 
+use rand::distributions::uniform::SampleUniform;
 use rand::distributions::Standard;
 use rand::prelude::*;
 
-use crate::{Inner, RandomStrategy, RandomVariable};
+use crate::{Inner, RandomStrategy, RandomVariable, RandomVariableRange};
 
 /// Samples the desired distributions and produces a single possible output of
 /// the random process.
@@ -26,6 +27,19 @@ impl RandomStrategy for Sampler {
     {
         func(f, rng.gen())
     }
+
+    #[inline]
+    fn fmap_rand_range<A: Inner, B: Inner, R: RandomVariable + SampleUniform, F: Fn(A, R) -> B>(
+        f: Self::Functor<A>,
+        range: impl RandomVariableRange<R>,
+        rng: &mut impl Rng,
+        func: F,
+    ) -> Self::Functor<B>
+    where
+        Standard: Distribution<R>,
+    {
+        func(f, rng.gen_range(range))
+    }
 }
 
 #[inline(always)]
@@ -38,6 +52,21 @@ where
 {
     f.into_iter()
         .flat_map(|a| R::sample_space().map(move |r| (a.clone(), r)))
+        .map(|(a, r)| func(a, r))
+        .collect()
+}
+
+#[inline(always)]
+fn vec_fmap_rand_range<A: Inner, B: Inner, R: RandomVariable + SampleUniform, F: Fn(A, R) -> B>(
+    f: Vec<A>,
+    range: impl RandomVariableRange<R>,
+    func: F,
+) -> Vec<B>
+where
+    Standard: Distribution<R>,
+{
+    f.into_iter()
+        .flat_map(|a| range.sample_space().map(move |r| (a.clone(), r)))
         .map(|(a, r)| func(a, r))
         .collect()
 }
@@ -72,6 +101,19 @@ impl<const N: usize> RandomStrategy for PopulationSampler<N> {
     {
         Self::shrink_to_capacity(vec_fmap_rand(f, func), rng)
     }
+
+    #[inline]
+    fn fmap_rand_range<A: Inner, B: Inner, R: RandomVariable + SampleUniform, F: Fn(A, R) -> B>(
+        f: Self::Functor<A>,
+        range: impl RandomVariableRange<R>,
+        rng: &mut impl Rng,
+        func: F,
+    ) -> Self::Functor<B>
+    where
+        Standard: Distribution<R>,
+    {
+        Self::shrink_to_capacity(vec_fmap_rand_range(f, range, func), rng)
+    }
 }
 
 /// Produces all possible outputs of the random process, with repetition, as a
@@ -99,6 +141,19 @@ impl RandomStrategy for Enumerator {
         Standard: Distribution<R>,
     {
         vec_fmap_rand(f, func)
+    }
+
+    #[inline]
+    fn fmap_rand_range<A: Inner, B: Inner, R: RandomVariable + SampleUniform, F: Fn(A, R) -> B>(
+        f: Self::Functor<A>,
+        range: impl RandomVariableRange<R>,
+        _: &mut impl Rng,
+        func: F,
+    ) -> Self::Functor<B>
+    where
+        Standard: Distribution<R>,
+    {
+        vec_fmap_rand_range(f, range, func)
     }
 }
 
@@ -129,6 +184,26 @@ impl<S: BuildHasher + Default> RandomStrategy for Counter<S> {
         let mut new_functor = Self::Functor::with_capacity_and_hasher(f.len(), Default::default());
         f.into_iter()
             .flat_map(|a| R::sample_space().map(move |r| (a.clone(), r)))
+            .map(|((a, c), r)| (func(a, r), c))
+            .for_each(|(b, count)| {
+                *new_functor.entry(b).or_insert(0) += count;
+            });
+        new_functor
+    }
+
+    #[inline]
+    fn fmap_rand_range<A: Inner, B: Inner, R: RandomVariable + SampleUniform, F: Fn(A, R) -> B>(
+        f: Self::Functor<A>,
+        range: impl RandomVariableRange<R>,
+        _: &mut impl Rng,
+        func: F,
+    ) -> Self::Functor<B>
+    where
+        Standard: Distribution<R>,
+    {
+        let mut new_functor = Self::Functor::with_capacity_and_hasher(f.len(), Default::default());
+        f.into_iter()
+            .flat_map(|a| range.sample_space().map(move |r| (a.clone(), r)))
             .map(|((a, c), r)| (func(a, r), c))
             .for_each(|(b, count)| {
                 *new_functor.entry(b).or_insert(0) += count;

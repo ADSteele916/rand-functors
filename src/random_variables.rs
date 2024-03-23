@@ -7,7 +7,7 @@ impl RandomVariable for bool {
     }
 }
 
-macro_rules! int_random_variable_impl {
+macro_rules! impl_random_variable_for_int {
     ($t:ty) => {
         impl RandomVariable for $t {
             #[inline]
@@ -18,8 +18,16 @@ macro_rules! int_random_variable_impl {
     };
 }
 
-int_random_variable_impl!(u8);
-int_random_variable_impl!(u16);
+impl_random_variable_for_int!(u8);
+impl_random_variable_for_int!(u16);
+impl_random_variable_for_int!(u32);
+impl_random_variable_for_int!(u64);
+impl_random_variable_for_int!(u128);
+impl_random_variable_for_int!(usize);
 
-int_random_variable_impl!(i8);
-int_random_variable_impl!(i16);
+impl_random_variable_for_int!(i8);
+impl_random_variable_for_int!(i16);
+impl_random_variable_for_int!(i32);
+impl_random_variable_for_int!(i64);
+impl_random_variable_for_int!(i128);
+impl_random_variable_for_int!(isize);
