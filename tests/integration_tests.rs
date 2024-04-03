@@ -19,6 +19,10 @@ fn random_process<S: RandomStrategy>(rng: &mut impl Rng, mut s: State) -> S::Fun
         }
         s
     });
+    sc = S::fmap(sc, |s| State {
+        a: s.a.wrapping_sub(1),
+        b: s.b,
+    });
     sc = S::fmap_rand(sc, rng, |mut s, r| {
         s.b[0] = s.b[0].wrapping_add(r);
         s
@@ -37,7 +41,7 @@ fn test_sampler() {
     assert_eq!(
         output,
         State {
-            a: 49253,
+            a: 49252,
             b: [108, 98],
         }
     );

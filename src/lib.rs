@@ -87,6 +87,9 @@ pub trait RandomStrategy {
     /// functor in the form `S::Functor<T>`.
     type Functor<I: Inner>: Functor<I>;
 
+    /// Applies the given function to the functor's inner.
+    fn fmap<A: Inner, B: Inner, F: Fn(A) -> B>(f: Self::Functor<A>, func: F) -> Self::Functor<B>;
+
     /// Using the strategy specified by the implementor, apply the given binary
     /// function to the given functor and an element of the sample space of a
     /// [`RandomVariable`].
@@ -210,8 +213,10 @@ where
 ///
 /// In functional programming, the Functor pattern allows one to apply functions
 /// to values inside a container type, without changing the container's
-/// structure. A Functor must support the `fmap` method, which applies the
-/// function passed to it as a parameter to the contents of the Functor.
+/// structure. A Functor must support an `fmap` operation, which applies the
+/// function passed to it as a parameter to the contents of the Functor. This
+/// operation is not a method required by Functor due to the limitations of
+/// Rust's type system.
 ///
 /// Additionally, this trait requires that implementors provide the `pure`
 /// associated function. This provides for a way to begin a series of `fmap` and
@@ -221,27 +226,12 @@ where
 /// full applicative functors would be unnecessary for the sorts of computations
 /// that this crate focuses on.
 pub trait Functor<I: Inner> {
-    /// The functor produced by [`Functor::fmap`].
-    ///
-    /// This should always be the same type as `Self`, just parametrized with
-    /// `O` rather than `I`.
-    ///
-    /// This is as workaround to ensure that a `Functor` is not restricted to
-    /// being an endofunctor. The need for this is a consequence of the fact
-    /// that `Self<I: Inner>` does not implement `Functor<I>` but rather `Self`
-    /// implements `Functor<I: Inner>`. This means that the enclosing type
-    /// cannot be accessed from the trait in signatures.
-    type Output<O: Inner>: Functor<O>;
-
     /// Produce an instance of `Self` containing the argument as its inner.
     ///
     /// This associated function is often used to begin a series of
     /// computations. The associated functions of [`RandomStrategy`] only
     /// operate on the `Functor` associated with that [`RandomStrategy`].
     fn pure(i: I) -> Self;
-
-    /// Applies the given function to the functor's inner.
-    fn fmap<O: Inner, F: Fn(I) -> O>(self, func: F) -> Self::Output<O>;
 }
 
 /// A valid inner type for a [`Functor`].

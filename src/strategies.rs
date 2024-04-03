@@ -17,6 +17,11 @@ impl RandomStrategy for Sampler {
     type Functor<I: Inner> = I;
 
     #[inline]
+    fn fmap<A: Inner, B: Inner, F: Fn(A) -> B>(f: Self::Functor<A>, func: F) -> Self::Functor<B> {
+        func(f)
+    }
+
+    #[inline]
     fn fmap_rand<A: Inner, B: Inner, R: RandomVariable, F: FnOnce(A, R) -> B>(
         f: Self::Functor<A>,
         rng: &mut impl Rng,
@@ -91,6 +96,11 @@ impl<const N: usize> RandomStrategy for PopulationSampler<N> {
     type Functor<I: Inner> = Vec<I>;
 
     #[inline]
+    fn fmap<A: Inner, B: Inner, F: Fn(A) -> B>(f: Self::Functor<A>, func: F) -> Self::Functor<B> {
+        f.into_iter().map(func).collect()
+    }
+
+    #[inline]
     fn fmap_rand<A: Inner, B: Inner, R: RandomVariable, F: Fn(A, R) -> B>(
         f: Self::Functor<A>,
         rng: &mut impl Rng,
@@ -132,6 +142,11 @@ impl RandomStrategy for Enumerator {
     type Functor<I: Inner> = Vec<I>;
 
     #[inline]
+    fn fmap<A: Inner, B: Inner, F: Fn(A) -> B>(f: Self::Functor<A>, func: F) -> Self::Functor<B> {
+        f.into_iter().map(func).collect()
+    }
+
+    #[inline]
     fn fmap_rand<A: Inner, B: Inner, R: RandomVariable, F: Fn(A, R) -> B>(
         f: Self::Functor<A>,
         _: &mut impl Rng,
@@ -171,6 +186,19 @@ pub struct Counter<S: BuildHasher + Default = RandomState> {
 
 impl<S: BuildHasher + Default> RandomStrategy for Counter<S> {
     type Functor<I: Inner> = HashMap<I, usize, S>;
+
+    #[inline]
+    fn fmap<A: Inner, B: Inner, F: Fn(A) -> B>(f: Self::Functor<A>, func: F) -> Self::Functor<B> {
+        // Constructing a new HashMap is necessary, as there may be fewer new
+        // keys than old keys, which requires merging some or all counts.
+        let mut new_functor = Self::Functor::with_capacity_and_hasher(f.len(), Default::default());
+        f.into_iter()
+            .map(|(i, count)| (func(i), count))
+            .for_each(|(o, count)| {
+                *new_functor.entry(o).or_insert(0) += count;
+            });
+        new_functor
+    }
 
     #[inline]
     fn fmap_rand<A: Inner, B: Inner, R: RandomVariable, F: Fn(A, R) -> B>(
