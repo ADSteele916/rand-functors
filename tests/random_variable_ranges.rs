@@ -2,7 +2,9 @@ use std::collections::HashMap;
 
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
-use rand_functors::{Counter, Enumerator, Functor, PopulationSampler, RandomStrategy, Sampler};
+use rand_functors::{
+    Counter, Enumerator, Functor, PopulationSampler, RandomStrategy, Sampler, UniqueEnumerator,
+};
 
 fn random_process<S: RandomStrategy>(rng: &mut impl Rng, base: u16) -> S::Functor<u16> {
     let functor = Functor::pure(base);
@@ -42,6 +44,18 @@ fn test_rand_range_enumerator() {
     assert_eq!(counts[&38], 6);
     assert_eq!(counts[&39], 6);
     assert_eq!(counts[&40], 1);
+}
+
+#[test]
+fn test_rand_range_unique_enumerator() {
+    let mut rng = ChaCha8Rng::seed_from_u64(0);
+    let d = random_process::<UniqueEnumerator>(&mut rng, 40);
+
+    assert_eq!(d.len(), 7);
+
+    for expected_possible_d in 34..=40 {
+        assert!(d.contains(&expected_possible_d))
+    }
 }
 
 #[test]

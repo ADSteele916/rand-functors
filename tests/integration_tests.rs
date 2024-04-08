@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
@@ -93,6 +93,23 @@ fn test_enumerator() {
     assert!(b0_counts
         .values()
         .all(|count| *count == 2 * 2_usize.pow(u16::BITS)));
+
+    assert!(output.iter().all(|s| s.b[1] == 47));
+}
+
+#[test]
+fn test_unique_enumerator() {
+    let mut rng = ChaCha8Rng::seed_from_u64(0);
+    let s = State { a: 74, b: [0, 47] };
+    let output = random_process::<UniqueEnumerator>(&mut rng, s);
+
+    assert_eq!(output.len(), 2_usize.pow(u8::BITS) * 2_usize.pow(u16::BITS));
+
+    let unique_a_values = output.iter().map(|s| s.a).collect::<HashSet<_>>();
+    assert_eq!(unique_a_values.len(), 2_usize.pow(u16::BITS));
+
+    let unique_b0_values = output.iter().map(|s| s.b[0]).collect::<HashSet<_>>();
+    assert_eq!(unique_b0_values.len(), 2_usize.pow(u8::BITS));
 
     assert!(output.iter().all(|s| s.b[1] == 47));
 }
