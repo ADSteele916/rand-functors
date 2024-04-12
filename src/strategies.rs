@@ -22,6 +22,15 @@ impl RandomStrategy for Sampler {
     }
 
     #[inline]
+    fn fmap_flat<A: Inner, B: Inner, F: FnMut(A) -> Self::Functor<B>>(
+        f: Self::Functor<A>,
+        _: &mut impl Rng,
+        mut func: F,
+    ) -> Self::Functor<B> {
+        func(f)
+    }
+
+    #[inline]
     fn fmap_rand<A: Inner, B: Inner, R: RandomVariable, F: FnOnce(A, R) -> B>(
         f: Self::Functor<A>,
         rng: &mut impl Rng,
@@ -101,6 +110,15 @@ impl<const N: usize> RandomStrategy for PopulationSampler<N> {
     }
 
     #[inline]
+    fn fmap_flat<A: Inner, B: Inner, F: FnMut(A) -> Self::Functor<B>>(
+        f: Self::Functor<A>,
+        rng: &mut impl Rng,
+        func: F,
+    ) -> Self::Functor<B> {
+        Self::shrink_to_capacity(f.into_iter().flat_map(func).collect(), rng)
+    }
+
+    #[inline]
     fn fmap_rand<A: Inner, B: Inner, R: RandomVariable, F: Fn(A, R) -> B>(
         f: Self::Functor<A>,
         rng: &mut impl Rng,
@@ -147,6 +165,15 @@ impl RandomStrategy for Enumerator {
     }
 
     #[inline]
+    fn fmap_flat<A: Inner, B: Inner, F: FnMut(A) -> Self::Functor<B>>(
+        f: Self::Functor<A>,
+        _: &mut impl Rng,
+        func: F,
+    ) -> Self::Functor<B> {
+        f.into_iter().flat_map(func).collect()
+    }
+
+    #[inline]
     fn fmap_rand<A: Inner, B: Inner, R: RandomVariable, F: Fn(A, R) -> B>(
         f: Self::Functor<A>,
         _: &mut impl Rng,
@@ -188,6 +215,14 @@ impl<S: BuildHasher + Default> RandomStrategy for UniqueEnumerator<S> {
 
     fn fmap<A: Inner, B: Inner, F: Fn(A) -> B>(f: Self::Functor<A>, func: F) -> Self::Functor<B> {
         f.into_iter().map(func).collect()
+    }
+
+    fn fmap_flat<A: Inner, B: Inner, F: FnMut(A) -> Self::Functor<B>>(
+        f: Self::Functor<A>,
+        _: &mut impl Rng,
+        func: F,
+    ) -> Self::Functor<B> {
+        f.into_iter().flat_map(func).collect()
     }
 
     fn fmap_rand<A: Inner, B: Inner, R: RandomVariable, F: Fn(A, R) -> B>(
@@ -245,6 +280,25 @@ impl<S: BuildHasher + Default> RandomStrategy for Counter<S> {
             .for_each(|(o, count)| {
                 *new_functor.entry(o).or_insert(0) += count;
             });
+        new_functor
+    }
+
+    #[inline]
+    fn fmap_flat<A: Inner, B: Inner, F: FnMut(A) -> Self::Functor<B>>(
+        f: Self::Functor<A>,
+        _: &mut impl Rng,
+        mut func: F,
+    ) -> Self::Functor<B> {
+        let mut new_functor = Self::Functor::with_capacity_and_hasher(f.len(), Default::default());
+        let children = f
+            .into_iter()
+            .map(|(i, count)| (func(i), count))
+            .collect::<Vec<_>>();
+        for (child, outer_count) in children {
+            for (output, inner_count) in child {
+                *new_functor.entry(output).or_insert(0) += inner_count * outer_count;
+            }
+        }
         new_functor
     }
 

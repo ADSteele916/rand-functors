@@ -90,9 +90,17 @@ pub trait RandomStrategy {
     /// Applies the given function to the functor's inner.
     fn fmap<A: Inner, B: Inner, F: Fn(A) -> B>(f: Self::Functor<A>, func: F) -> Self::Functor<B>;
 
-    /// Using the strategy specified by the implementor, apply the given binary
-    /// function to the given functor and an element of the sample space of a
-    /// [`RandomVariable`].
+    /// Applies the given function to the functor's inner, flattening one layer
+    /// of nested structure.
+    fn fmap_flat<A: Inner, B: Inner, F: FnMut(A) -> Self::Functor<B>>(
+        f: Self::Functor<A>,
+        rng: &mut impl Rng,
+        func: F,
+    ) -> Self::Functor<B>;
+
+    /// Using the strategy specified by the implementor, applies the given
+    /// binary function to the given functor and an element of the sample space
+    /// of a [`RandomVariable`].
     ///
     /// Note that **no guarantees** are made about whether or how the `rand`
     /// parameter will be used. It may be sampled zero, one, or arbitrarily many
@@ -108,9 +116,9 @@ pub trait RandomStrategy {
     where
         Standard: Distribution<R>;
 
-    /// Using the strategy specified by the implementor, apply the given binary
-    /// function to the given functor and an element of the sample space of a
-    /// [`RandomVariableRange`].
+    /// Using the strategy specified by the implementor, applies the given
+    /// binary function to the given functor and an element of the sample space
+    /// of a [`RandomVariableRange`].
     ///
     /// Note that **no guarantees** are made about whether or how the `rand`
     /// parameter will be used. It may be sampled zero, one, or arbitrarily many
@@ -219,12 +227,12 @@ where
 /// Rust's type system.
 ///
 /// Additionally, this trait requires that implementors provide the `pure`
-/// associated function. This provides for a way to begin a series of `fmap` and
-/// `fmap_rand` operations. This requirement technically puts this crate's
-/// functors halfway between "normal" functors and applicative functors, as a
-/// subset of the former and a superset of the latter. However, implementing
-/// full applicative functors would be unnecessary for the sorts of computations
-/// that this crate focuses on.
+/// associated function. This provides for a way to begin a series of `fmap`,
+/// `fmap_flat`, and `fmap_rand` operations. This requirement technically puts
+/// this crate's functors halfway between "normal" functors and applicative
+/// functors, as a subset of the former and a superset of the latter. However,
+/// implementing full applicative functors would be unnecessary for the sorts of
+/// computations that this crate focuses on.
 pub trait Functor<I: Inner> {
     /// Produce an instance of `Self` containing the argument as its inner.
     ///
