@@ -58,8 +58,12 @@
 //! default. However, it is possible to implement all the requisite traits for a
 //! custom data type.
 
+#![cfg_attr(not(feature = "std"), no_std)]
 #![warn(clippy::cargo)]
 #![warn(missing_docs)]
+
+#[cfg(feature = "alloc")]
+extern crate alloc;
 
 pub use strategies::*;
 
@@ -68,7 +72,7 @@ mod random_variable_ranges;
 mod random_variables;
 mod strategies;
 
-use std::hash::Hash;
+use core::hash::Hash;
 
 use rand::distributions::uniform::{SampleRange, SampleUniform};
 use rand::distributions::Standard;

@@ -10,7 +10,7 @@ description = """
 A zero-cost abstraction for sampling from and enumerating the outcomes of a random process using the same code.
 """
 keywords = ["random", "rng"]
-categories = ["algorithms", "science"]
+categories = ["algorithms", "no-std", "no-std::no-alloc", "science"]
 edition = "2021"
 rust-version = "1.76.0"
 include = ["src/", "LICENSE-*", "README.md"]
@@ -18,8 +18,14 @@ include = ["src/", "LICENSE-*", "README.md"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rand = "0.8.5"
+rand = { version = "0.8.5", default-features = false }
 
 [dev-dependencies]
 ahash = "0.8.11"
+rand = "0.8.5"
 rand_chacha = "0.3.1"
+
+[features]
+default = ["std"]
+alloc = ["rand/alloc"]
+std = ["alloc", "rand/std"]
