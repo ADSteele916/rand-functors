@@ -1,5 +1,6 @@
+use std::collections::hash_map::RandomState;
 use std::collections::HashSet;
-use std::hash::{BuildHasher, RandomState};
+use std::hash::BuildHasher;
 use std::marker::PhantomData;
 
 use rand::distributions::uniform::SampleUniform;

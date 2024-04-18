@@ -12,7 +12,7 @@ A zero-cost abstraction for sampling from and enumerating the outcomes of a rand
 keywords = ["random", "rng"]
 categories = ["algorithms", "no-std", "no-std::no-alloc", "science"]
 edition = "2021"
-rust-version = "1.76.0"
+rust-version = "1.75.0"
 include = ["src/", "LICENSE-*", "README.md"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
