@@ -7,6 +7,8 @@ use std::collections::{HashMap, HashSet};
 #[cfg(feature = "std")]
 use std::hash::BuildHasher;
 
+use num_traits::NumAssign;
+
 use crate::{Functor, Inner};
 
 impl<I: Inner> Functor<I> for I {
@@ -25,11 +27,13 @@ impl<I: Inner> Functor<I> for Vec<I> {
 }
 
 #[cfg(feature = "std")]
-impl<I: Inner, S: BuildHasher + Default> Functor<I> for HashMap<I, usize, S> {
+impl<I: Inner, N: Clone + Default + NumAssign, S: BuildHasher + Default> Functor<I>
+    for HashMap<I, N, S>
+{
     #[inline]
     fn pure(i: I) -> Self {
         let mut hm = Self::default();
-        hm.insert(i, 1);
+        hm.insert(i, N::one());
         hm
     }
 }

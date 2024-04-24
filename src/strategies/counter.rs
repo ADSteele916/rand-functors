@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::hash::BuildHasher;
 use std::marker::PhantomData;
 
+use num_traits::{NumAssign, Unsigned};
 use rand::distributions::uniform::SampleUniform;
 use rand::distributions::Standard;
 use rand::prelude::*;
@@ -17,12 +18,18 @@ use crate::{Inner, RandomStrategy, RandomVariable, RandomVariableRange};
 /// field of a struct or the use of functions like `saturating_add` or
 /// `saturating_mul`.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
-pub struct Counter<S: BuildHasher + Default = RandomState> {
-    phantom: PhantomData<S>,
+pub struct Counter<
+    S: BuildHasher + Default = RandomState,
+    N: Clone + Default + NumAssign + Unsigned = usize,
+> {
+    count_phantom: PhantomData<N>,
+    hasher_phantom: PhantomData<S>,
 }
 
-impl<S: BuildHasher + Default> RandomStrategy for Counter<S> {
-    type Functor<I: Inner> = HashMap<I, usize, S>;
+impl<S: BuildHasher + Default, N: Clone + Default + NumAssign + Unsigned> RandomStrategy
+    for Counter<S, N>
+{
+    type Functor<I: Inner> = HashMap<I, N, S>;
 
     #[inline]
     fn fmap<A: Inner, B: Inner, F: Fn(A) -> B>(f: Self::Functor<A>, func: F) -> Self::Functor<B> {
@@ -32,7 +39,7 @@ impl<S: BuildHasher + Default> RandomStrategy for Counter<S> {
         f.into_iter()
             .map(|(i, count)| (func(i), count))
             .for_each(|(o, count)| {
-                *new_functor.entry(o).or_insert(0) += count;
+                *new_functor.entry(o).or_insert(N::zero()) += count;
             });
         new_functor
     }
@@ -50,7 +57,8 @@ impl<S: BuildHasher + Default> RandomStrategy for Counter<S> {
             .collect::<Vec<_>>();
         for (child, outer_count) in children {
             for (output, inner_count) in child {
-                *new_functor.entry(output).or_insert(0) += inner_count * outer_count;
+                *new_functor.entry(output).or_insert(N::zero()) +=
+                    inner_count * outer_count.clone();
             }
         }
         new_functor
@@ -70,7 +78,7 @@ impl<S: BuildHasher + Default> RandomStrategy for Counter<S> {
             .flat_map(|a| R::sample_space().map(move |r| (a.clone(), r)))
             .map(|((a, c), r)| (func(a, r), c))
             .for_each(|(b, count)| {
-                *new_functor.entry(b).or_insert(0) += count;
+                *new_functor.entry(b).or_insert(N::zero()) += count;
             });
         new_functor
     }
@@ -90,7 +98,7 @@ impl<S: BuildHasher + Default> RandomStrategy for Counter<S> {
             .flat_map(|a| range.sample_space().map(move |r| (a.clone(), r)))
             .map(|((a, c), r)| (func(a, r), c))
             .for_each(|(b, count)| {
-                *new_functor.entry(b).or_insert(0) += count;
+                *new_functor.entry(b).or_insert(N::zero()) += count;
             });
         new_functor
     }

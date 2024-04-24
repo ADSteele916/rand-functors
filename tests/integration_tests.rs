@@ -121,7 +121,7 @@ fn test_counter() {
         a: 5286,
         b: [253, 199],
     };
-    let output = random_process::<Counter<ahash::RandomState>>(&mut rng, s);
+    let output = random_process::<Counter<ahash::RandomState, u128>>(&mut rng, s);
 
     assert_eq!(output.len(), 2_usize.pow(u8::BITS) * 2_usize.pow(u16::BITS));
 
@@ -134,7 +134,7 @@ fn test_counter() {
     assert_eq!(a_counts.len(), 2_usize.pow(u16::BITS));
     assert!(a_counts
         .values()
-        .all(|count| *count == 2 * 2_usize.pow(u8::BITS)));
+        .all(|count| *count == (2 * 2_usize.pow(u8::BITS)) as u128));
 
     let b0_counts = output.iter().fold(HashMap::new(), |mut map, (s, count)| {
         *map.entry(s.b[0]).or_insert(0) += count;
@@ -143,7 +143,7 @@ fn test_counter() {
     assert_eq!(b0_counts.len(), 2_usize.pow(u8::BITS));
     assert!(b0_counts
         .values()
-        .all(|count| *count == 2 * 2_usize.pow(u16::BITS)));
+        .all(|count| *count == (2 * 2_usize.pow(u16::BITS)) as u128));
 
     assert!(output.iter().all(|(s, _)| s.b[1] == 199));
 }
