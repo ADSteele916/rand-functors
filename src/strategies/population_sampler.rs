@@ -11,7 +11,6 @@ use crate::{Enumerator, Inner, RandomStrategy, RandomVariable, RandomVariableRan
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub struct PopulationSampler<const N: usize>;
 
-#[cfg(feature = "alloc")]
 impl<const N: usize> PopulationSampler<N> {
     #[inline(always)]
     fn shrink_to_capacity<T: Inner>(mut f: Vec<T>, rng: &mut impl Rng) -> Vec<T> {
@@ -23,7 +22,6 @@ impl<const N: usize> PopulationSampler<N> {
     }
 }
 
-#[cfg(feature = "alloc")]
 impl<const N: usize> RandomStrategy for PopulationSampler<N> {
     type Functor<I: Inner> = Vec<I>;
 

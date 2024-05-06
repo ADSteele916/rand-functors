@@ -6,7 +6,6 @@ use rand::prelude::*;
 
 use crate::{Inner, RandomStrategy, RandomVariable, RandomVariableRange};
 
-#[cfg(feature = "alloc")]
 /// Produces all possible outputs of the random process, with repetition, as a
 /// [`Vec`].
 ///
@@ -22,7 +21,6 @@ use crate::{Inner, RandomStrategy, RandomVariable, RandomVariableRange};
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub struct Enumerator;
 
-#[cfg(feature = "alloc")]
 impl RandomStrategy for Enumerator {
     type Functor<I: Inner> = Vec<I>;
 

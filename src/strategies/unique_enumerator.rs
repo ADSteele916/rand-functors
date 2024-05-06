@@ -9,7 +9,6 @@ use rand::prelude::*;
 
 use crate::{Inner, RandomStrategy, RandomVariable, RandomVariableRange};
 
-#[cfg(feature = "std")]
 /// Produces all possible outputs of the random process, without repetition,
 /// stored in a [`HashSet`].
 ///
@@ -21,7 +20,6 @@ pub struct UniqueEnumerator<S: BuildHasher + Default = RandomState> {
     phantom: PhantomData<S>,
 }
 
-#[cfg(feature = "std")]
 impl<S: BuildHasher + Default> RandomStrategy for UniqueEnumerator<S> {
     type Functor<I: Inner> = HashSet<I, S>;
 
