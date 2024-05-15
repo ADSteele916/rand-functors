@@ -4,7 +4,9 @@ use rand::distributions::uniform::SampleUniform;
 use rand::distributions::Standard;
 use rand::prelude::*;
 
-use crate::{Inner, RandomStrategy, RandomVariable, RandomVariableRange};
+use crate::{
+    FlattenableRandomStrategy, Inner, RandomStrategy, RandomVariable, RandomVariableRange,
+};
 
 /// Produces all possible outputs of the random process, with repetition, as a
 /// [`Vec`].
@@ -27,15 +29,6 @@ impl RandomStrategy for Enumerator {
     #[inline]
     fn fmap<A: Inner, B: Inner, F: Fn(A) -> B>(f: Self::Functor<A>, func: F) -> Self::Functor<B> {
         f.into_iter().map(func).collect()
-    }
-
-    #[inline]
-    fn fmap_flat<A: Inner, B: Inner, F: FnMut(A) -> Self::Functor<B>>(
-        f: Self::Functor<A>,
-        _: &mut impl Rng,
-        func: F,
-    ) -> Self::Functor<B> {
-        f.into_iter().flat_map(func).collect()
     }
 
     #[inline]
@@ -67,5 +60,15 @@ impl RandomStrategy for Enumerator {
             .flat_map(|a| range.sample_space().map(move |r| (a.clone(), r)))
             .map(|(a, r)| func(a, r))
             .collect()
+    }
+}
+
+impl FlattenableRandomStrategy for Enumerator {
+    #[inline]
+    fn fmap_flat<A: Inner, B: Inner, F: FnMut(A) -> Self::Functor<B>>(
+        f: Self::Functor<A>,
+        func: F,
+    ) -> Self::Functor<B> {
+        f.into_iter().flat_map(func).collect()
     }
 }

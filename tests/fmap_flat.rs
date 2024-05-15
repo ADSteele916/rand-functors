@@ -2,12 +2,15 @@ use std::collections::HashMap;
 
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
-use rand_functors::{Counter, Enumerator, Functor, PopulationSampler, RandomStrategy, Sampler};
+use rand_functors::{Counter, Enumerator, FlattenableRandomStrategy, Functor, Sampler};
 
-fn random_process<S: RandomStrategy>(rng: &mut (impl Clone + Rng), base: u8) -> S::Functor<u8> {
+fn random_process<S: FlattenableRandomStrategy>(
+    rng: &mut (impl Clone + Rng),
+    base: u8,
+) -> S::Functor<u8> {
     let mut functor = Functor::pure(base);
     functor = S::fmap_rand_range(functor, 0..=16, rng, |d, r: u8| d.saturating_sub(r));
-    S::fmap_flat(functor, &mut rng.clone(), |d| {
+    S::fmap_flat(functor, |d| {
         if d != 0 {
             Functor::pure(d)
         } else {
@@ -22,16 +25,6 @@ fn test_flat_map_sampler() {
     let mut rng = ChaCha8Rng::seed_from_u64(0);
     let output = random_process::<Sampler>(&mut rng, 11);
     assert_eq!(output, 207);
-}
-
-#[test]
-fn test_flat_map_population_sampler() {
-    let mut rng = ChaCha8Rng::seed_from_u64(0);
-    let output = random_process::<PopulationSampler<36>>(&mut rng, 4);
-    assert_eq!(output.len(), 36);
-    assert!(output
-        .iter()
-        .all(|i| (1..=3).contains(i) || (200..=210).contains(i)))
 }
 
 #[test]

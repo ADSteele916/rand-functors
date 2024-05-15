@@ -7,7 +7,9 @@ use rand::distributions::uniform::SampleUniform;
 use rand::distributions::Standard;
 use rand::prelude::*;
 
-use crate::{Inner, RandomStrategy, RandomVariable, RandomVariableRange};
+use crate::{
+    FlattenableRandomStrategy, Inner, RandomStrategy, RandomVariable, RandomVariableRange,
+};
 
 /// Produces all possible outputs of the random process, without repetition,
 /// stored in a [`HashSet`].
@@ -26,15 +28,6 @@ impl<S: BuildHasher + Default> RandomStrategy for UniqueEnumerator<S> {
     #[inline]
     fn fmap<A: Inner, B: Inner, F: Fn(A) -> B>(f: Self::Functor<A>, func: F) -> Self::Functor<B> {
         f.into_iter().map(func).collect()
-    }
-
-    #[inline]
-    fn fmap_flat<A: Inner, B: Inner, F: FnMut(A) -> Self::Functor<B>>(
-        f: Self::Functor<A>,
-        _: &mut impl Rng,
-        func: F,
-    ) -> Self::Functor<B> {
-        f.into_iter().flat_map(func).collect()
     }
 
     #[inline]
@@ -66,5 +59,15 @@ impl<S: BuildHasher + Default> RandomStrategy for UniqueEnumerator<S> {
             .flat_map(|a| range.sample_space().map(move |r| (a.clone(), r)))
             .map(|(a, r)| func(a, r))
             .collect()
+    }
+}
+
+impl<S: BuildHasher + Default> FlattenableRandomStrategy for UniqueEnumerator<S> {
+    #[inline]
+    fn fmap_flat<A: Inner, B: Inner, F: FnMut(A) -> Self::Functor<B>>(
+        f: Self::Functor<A>,
+        func: F,
+    ) -> Self::Functor<B> {
+        f.into_iter().flat_map(func).collect()
     }
 }

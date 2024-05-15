@@ -2,7 +2,9 @@ use rand::distributions::uniform::SampleUniform;
 use rand::distributions::Standard;
 use rand::prelude::*;
 
-use crate::{Inner, RandomStrategy, RandomVariable, RandomVariableRange};
+use crate::{
+    FlattenableRandomStrategy, Inner, RandomStrategy, RandomVariable, RandomVariableRange,
+};
 
 /// Samples the desired distributions and produces a single possible output of
 /// the random process.
@@ -14,15 +16,6 @@ impl RandomStrategy for Sampler {
 
     #[inline]
     fn fmap<A: Inner, B: Inner, F: Fn(A) -> B>(f: Self::Functor<A>, func: F) -> Self::Functor<B> {
-        func(f)
-    }
-
-    #[inline]
-    fn fmap_flat<A: Inner, B: Inner, F: FnMut(A) -> Self::Functor<B>>(
-        f: Self::Functor<A>,
-        _: &mut impl Rng,
-        mut func: F,
-    ) -> Self::Functor<B> {
         func(f)
     }
 
@@ -49,5 +42,15 @@ impl RandomStrategy for Sampler {
         Standard: Distribution<R>,
     {
         func(f, rng.gen_range(range))
+    }
+}
+
+impl FlattenableRandomStrategy for Sampler {
+    #[inline]
+    fn fmap_flat<A: Inner, B: Inner, F: FnMut(A) -> Self::Functor<B>>(
+        f: Self::Functor<A>,
+        mut func: F,
+    ) -> Self::Functor<B> {
+        func(f)
     }
 }

@@ -94,14 +94,6 @@ pub trait RandomStrategy {
     /// Applies the given function to the functor's inner.
     fn fmap<A: Inner, B: Inner, F: Fn(A) -> B>(f: Self::Functor<A>, func: F) -> Self::Functor<B>;
 
-    /// Applies the given function to the functor's inner, flattening one layer
-    /// of nested structure.
-    fn fmap_flat<A: Inner, B: Inner, F: FnMut(A) -> Self::Functor<B>>(
-        f: Self::Functor<A>,
-        rng: &mut impl Rng,
-        func: F,
-    ) -> Self::Functor<B>;
-
     /// Using the strategy specified by the implementor, applies the given
     /// binary function to the given functor and an element of the sample space
     /// of a [`RandomVariable`].
@@ -138,6 +130,21 @@ pub trait RandomStrategy {
     ) -> Self::Functor<B>
     where
         Standard: Distribution<R>;
+}
+
+/// A [`RandomStrategy`] that supports an `fmap_flat` operation.
+///
+/// This requires a separate trait as, unlike `fmap`, a call to `fmap_flat` may
+/// require a functor to grow. This poses problems for stateless strategies.
+/// `PopulationSampler`, for instance, requires an [`Rng`] implementor to select
+/// which samples to discard.
+pub trait FlattenableRandomStrategy: RandomStrategy {
+    /// Applies the given function to the functor's inner, flattening one layer
+    /// of nested structure.
+    fn fmap_flat<A: Inner, B: Inner, F: FnMut(A) -> Self::Functor<B>>(
+        f: Self::Functor<A>,
+        func: F,
+    ) -> Self::Functor<B>;
 }
 
 /// A type that is enumerable and can be sampled from uniformly.

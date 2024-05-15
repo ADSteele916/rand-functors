@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - This changelog.
 
+### Changed
+
+- `fmap_flat` is now an associated function of the new trait `FlattenableRandomStrategy`.
+- `fmap_flat` no longer takes an `impl Rng` as a a parameter.
+
 ## [0.7.0] - 2024-04-24
 
 ### Changed

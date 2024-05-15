@@ -8,7 +8,9 @@ use rand::distributions::uniform::SampleUniform;
 use rand::distributions::Standard;
 use rand::prelude::*;
 
-use crate::{Inner, RandomStrategy, RandomVariable, RandomVariableRange};
+use crate::{
+    FlattenableRandomStrategy, Inner, RandomStrategy, RandomVariable, RandomVariableRange,
+};
 
 /// Produces all possible outputs of the random process, with repetition, stored
 /// in a [`HashMap`].
@@ -41,26 +43,6 @@ impl<S: BuildHasher + Default, N: Clone + Default + NumAssign + Unsigned> Random
             .for_each(|(o, count)| {
                 *new_functor.entry(o).or_insert(N::zero()) += count;
             });
-        new_functor
-    }
-
-    #[inline]
-    fn fmap_flat<A: Inner, B: Inner, F: FnMut(A) -> Self::Functor<B>>(
-        f: Self::Functor<A>,
-        _: &mut impl Rng,
-        mut func: F,
-    ) -> Self::Functor<B> {
-        let mut new_functor = Self::Functor::with_capacity_and_hasher(f.len(), Default::default());
-        let children = f
-            .into_iter()
-            .map(|(i, count)| (func(i), count))
-            .collect::<Vec<_>>();
-        for (child, outer_count) in children {
-            for (output, inner_count) in child {
-                *new_functor.entry(output).or_insert(N::zero()) +=
-                    inner_count * outer_count.clone();
-            }
-        }
         new_functor
     }
 
@@ -100,6 +82,29 @@ impl<S: BuildHasher + Default, N: Clone + Default + NumAssign + Unsigned> Random
             .for_each(|(b, count)| {
                 *new_functor.entry(b).or_insert(N::zero()) += count;
             });
+        new_functor
+    }
+}
+
+impl<S: BuildHasher + Default, N: Clone + Default + NumAssign + Unsigned> FlattenableRandomStrategy
+    for Counter<S, N>
+{
+    #[inline]
+    fn fmap_flat<A: Inner, B: Inner, F: FnMut(A) -> Self::Functor<B>>(
+        f: Self::Functor<A>,
+        mut func: F,
+    ) -> Self::Functor<B> {
+        let mut new_functor = Self::Functor::with_capacity_and_hasher(f.len(), Default::default());
+        let children = f
+            .into_iter()
+            .map(|(i, count)| (func(i), count))
+            .collect::<Vec<_>>();
+        for (child, outer_count) in children {
+            for (output, inner_count) in child {
+                *new_functor.entry(output).or_insert(N::zero()) +=
+                    inner_count * outer_count.clone();
+            }
+        }
         new_functor
     }
 }

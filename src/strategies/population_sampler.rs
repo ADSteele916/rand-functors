@@ -31,15 +31,6 @@ impl<const N: usize> RandomStrategy for PopulationSampler<N> {
     }
 
     #[inline]
-    fn fmap_flat<A: Inner, B: Inner, F: FnMut(A) -> Self::Functor<B>>(
-        f: Self::Functor<A>,
-        rng: &mut impl Rng,
-        func: F,
-    ) -> Self::Functor<B> {
-        Self::shrink_to_capacity(Enumerator::fmap_flat(f, rng, func), rng)
-    }
-
-    #[inline]
     fn fmap_rand<A: Inner, B: Inner, R: RandomVariable, F: Fn(A, R) -> B>(
         f: Self::Functor<A>,
         rng: &mut impl Rng,
