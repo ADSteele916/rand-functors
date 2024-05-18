@@ -4,7 +4,7 @@ use rand::distributions::uniform::SampleUniform;
 use rand::distributions::Standard;
 use rand::prelude::*;
 
-use crate::{Enumerator, Inner, RandomStrategy, RandomVariable, RandomVariableRange};
+use crate::{Inner, RandomStrategy, RandomVariable, RandomVariableRange};
 
 /// Produces a random subset (technically, submultiset) of possible outputs of
 /// the random process.
@@ -27,7 +27,7 @@ impl<const N: usize> RandomStrategy for PopulationSampler<N> {
 
     #[inline]
     fn fmap<A: Inner, B: Inner, F: Fn(A) -> B>(f: Self::Functor<A>, func: F) -> Self::Functor<B> {
-        Enumerator::fmap(f, func)
+        f.into_iter().map(func).collect()
     }
 
     #[inline]
@@ -39,7 +39,13 @@ impl<const N: usize> RandomStrategy for PopulationSampler<N> {
     where
         Standard: Distribution<R>,
     {
-        Self::shrink_to_capacity(Enumerator::fmap_rand(f, rng, func), rng)
+        Self::shrink_to_capacity(
+            f.into_iter()
+                .flat_map(|a| R::sample_space().map(move |r| (a.clone(), r)))
+                .map(|(a, r)| func(a, r))
+                .collect(),
+            rng,
+        )
     }
 
     #[inline]
@@ -52,6 +58,12 @@ impl<const N: usize> RandomStrategy for PopulationSampler<N> {
     where
         Standard: Distribution<R>,
     {
-        Self::shrink_to_capacity(Enumerator::fmap_rand_range(f, range, rng, func), rng)
+        Self::shrink_to_capacity(
+            f.into_iter()
+                .flat_map(|a| range.sample_space().map(move |r| (a.clone(), r)))
+                .map(|(a, r)| func(a, r))
+                .collect(),
+            rng,
+        )
     }
 }
