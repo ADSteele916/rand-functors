@@ -52,12 +52,6 @@ fn test_flat_map_counter() {
     let mut rng = ChaCha8Rng::seed_from_u64(0);
     let output = random_process::<Counter>(&mut rng, 9);
 
-    println!("{:?}", {
-        let mut v = output.clone().into_iter().collect::<Vec<_>>();
-        v.sort();
-        v
-    });
-
     assert_eq!(output.len(), 20);
     assert_eq!(output.values().sum::<usize>(), 8 * 11 + 9);
 
