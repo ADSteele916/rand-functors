@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 
-use rand::distributions::uniform::SampleUniform;
-use rand::distributions::Standard;
+use rand::distr::uniform::SampleUniform;
+use rand::distr::StandardUniform;
 use rand::prelude::*;
 
 use crate::{Inner, RandomStrategy, RandomVariable, RandomVariableRange};
@@ -15,7 +15,7 @@ impl<const N: usize> PopulationSampler<N> {
     #[inline(always)]
     fn shrink_to_capacity<T: Inner>(mut f: Vec<T>, rng: &mut impl Rng) -> Vec<T> {
         while f.len() > N {
-            let index = rng.gen_range(0..f.len());
+            let index = rng.random_range(0..f.len());
             f.swap_remove(index);
         }
         f
@@ -37,7 +37,7 @@ impl<const N: usize> RandomStrategy for PopulationSampler<N> {
         func: F,
     ) -> Self::Functor<B>
     where
-        Standard: Distribution<R>,
+        StandardUniform: Distribution<R>,
     {
         Self::shrink_to_capacity(
             f.into_iter()
@@ -56,7 +56,7 @@ impl<const N: usize> RandomStrategy for PopulationSampler<N> {
         func: F,
     ) -> Self::Functor<B>
     where
-        Standard: Distribution<R>,
+        StandardUniform: Distribution<R>,
     {
         Self::shrink_to_capacity(
             f.into_iter()

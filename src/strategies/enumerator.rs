@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 
-use rand::distributions::uniform::SampleUniform;
-use rand::distributions::Standard;
+use rand::distr::uniform::SampleUniform;
+use rand::distr::StandardUniform;
 use rand::prelude::*;
 
 use crate::{
@@ -38,7 +38,7 @@ impl RandomStrategy for Enumerator {
         func: F,
     ) -> Self::Functor<B>
     where
-        Standard: Distribution<R>,
+        StandardUniform: Distribution<R>,
     {
         f.into_iter()
             .flat_map(|a| R::sample_space().map(move |r| (a.clone(), r)))
@@ -54,7 +54,7 @@ impl RandomStrategy for Enumerator {
         func: F,
     ) -> Self::Functor<B>
     where
-        Standard: Distribution<R>,
+        StandardUniform: Distribution<R>,
     {
         f.into_iter()
             .flat_map(|a| range.sample_space().map(move |r| (a.clone(), r)))

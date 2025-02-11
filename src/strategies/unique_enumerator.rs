@@ -3,8 +3,8 @@ use std::collections::HashSet;
 use std::hash::BuildHasher;
 use std::marker::PhantomData;
 
-use rand::distributions::uniform::SampleUniform;
-use rand::distributions::Standard;
+use rand::distr::uniform::SampleUniform;
+use rand::distr::StandardUniform;
 use rand::prelude::*;
 
 use crate::{
@@ -37,7 +37,7 @@ impl<S: BuildHasher + Default> RandomStrategy for UniqueEnumerator<S> {
         func: F,
     ) -> Self::Functor<B>
     where
-        Standard: Distribution<R>,
+        StandardUniform: Distribution<R>,
     {
         f.into_iter()
             .flat_map(|a| R::sample_space().map(move |r| (a.clone(), r)))
@@ -53,7 +53,7 @@ impl<S: BuildHasher + Default> RandomStrategy for UniqueEnumerator<S> {
         func: F,
     ) -> Self::Functor<B>
     where
-        Standard: Distribution<R>,
+        StandardUniform: Distribution<R>,
     {
         f.into_iter()
             .flat_map(|a| range.sample_space().map(move |r| (a.clone(), r)))

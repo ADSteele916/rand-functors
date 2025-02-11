@@ -6,7 +6,7 @@
 //! A motivating problem for this crate is the code duplication present across
 //! these two functions modelling the same random process:
 //! ```
-//! use rand::prelude::*;
+//! use rand::random;
 //!
 //! fn next_state(mut state: u8) -> u8 {
 //!     state = state.wrapping_add(random());
@@ -32,14 +32,12 @@
 //!
 //! Using `rand-functors`, these two functions can be combined as:
 //! ```
-//! use rand::prelude::*;
+//! use rand::rng;
 //! use rand_functors::{Functor, RandomStrategy};
 //!
 //! fn next_state<S: RandomStrategy>(state: u8) -> S::Functor<u8> {
-//!     let mut out = S::fmap_rand(Functor::pure(state), &mut thread_rng(), |s, r| {
-//!         s.wrapping_add(r)
-//!     });
-//!     out = S::fmap_rand(out, &mut thread_rng(), |s, r| if r { s % 3 } else { s });
+//!     let mut out = S::fmap_rand(Functor::pure(state), &mut rng(), |s, r| s.wrapping_add(r));
+//!     out = S::fmap_rand(out, &mut rng(), |s, r| if r { s % 3 } else { s });
 //!     out
 //! }
 //! ```
@@ -74,8 +72,8 @@ mod strategies;
 
 use core::hash::Hash;
 
-use rand::distributions::uniform::{SampleRange, SampleUniform};
-use rand::distributions::Standard;
+use rand::distr::uniform::{SampleRange, SampleUniform};
+use rand::distr::StandardUniform;
 use rand::prelude::*;
 
 /// A strategy for evaluating sequences of functions of random data.
@@ -110,7 +108,7 @@ pub trait RandomStrategy {
         func: F,
     ) -> Self::Functor<B>
     where
-        Standard: Distribution<R>;
+        StandardUniform: Distribution<R>;
 
     /// Using the strategy specified by the implementor, applies the given
     /// binary function to the given functor and an element of the sample space
@@ -129,7 +127,7 @@ pub trait RandomStrategy {
         func: F,
     ) -> Self::Functor<B>
     where
-        Standard: Distribution<R>;
+        StandardUniform: Distribution<R>;
 }
 
 /// A [`RandomStrategy`] that supports an `fmap_flat` operation.
@@ -180,7 +178,7 @@ pub trait FlattenableRandomStrategy: RandomStrategy {
 /// implementations will typically use [`Iterator::flat_map`] to create a
 /// Cartesian product of all the sample spaces of the struct's fields.
 /// ```
-/// use rand::distributions::Standard;
+/// use rand::distr::StandardUniform;
 /// use rand::prelude::*;
 /// use rand_functors::RandomVariable;
 ///
@@ -190,7 +188,7 @@ pub trait FlattenableRandomStrategy: RandomStrategy {
 ///     y: u8,
 /// }
 ///
-/// impl Distribution<Coordinate> for Standard {
+/// impl Distribution<Coordinate> for StandardUniform {
 ///     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Coordinate {
 ///         Coordinate {
 ///             x: self.sample(rng),
@@ -207,7 +205,7 @@ pub trait FlattenableRandomStrategy: RandomStrategy {
 /// ```
 pub trait RandomVariable: Sized
 where
-    Standard: Distribution<Self>,
+    StandardUniform: Distribution<Self>,
 {
     /// Produce an [`Iterator`] containing all possible values of this type.
     ///
@@ -221,7 +219,7 @@ where
 /// or sampled from.
 pub trait RandomVariableRange<R: RandomVariable + SampleUniform>
 where
-    Standard: Distribution<R>,
+    StandardUniform: Distribution<R>,
     Self: SampleRange<R>,
 {
     /// Produce an [`Iterator`] containing all possible values in this range.

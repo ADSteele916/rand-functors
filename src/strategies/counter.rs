@@ -4,8 +4,8 @@ use std::hash::BuildHasher;
 use std::marker::PhantomData;
 
 use num_traits::{NumAssign, Unsigned};
-use rand::distributions::uniform::SampleUniform;
-use rand::distributions::Standard;
+use rand::distr::uniform::SampleUniform;
+use rand::distr::StandardUniform;
 use rand::prelude::*;
 
 use crate::{
@@ -53,7 +53,7 @@ impl<S: BuildHasher + Default, N: Clone + Default + NumAssign + Unsigned> Random
         func: F,
     ) -> Self::Functor<B>
     where
-        Standard: Distribution<R>,
+        StandardUniform: Distribution<R>,
     {
         let mut new_functor = Self::Functor::with_capacity_and_hasher(f.len(), Default::default());
         f.into_iter()
@@ -73,7 +73,7 @@ impl<S: BuildHasher + Default, N: Clone + Default + NumAssign + Unsigned> Random
         func: F,
     ) -> Self::Functor<B>
     where
-        Standard: Distribution<R>,
+        StandardUniform: Distribution<R>,
     {
         let mut new_functor = Self::Functor::with_capacity_and_hasher(f.len(), Default::default());
         f.into_iter()

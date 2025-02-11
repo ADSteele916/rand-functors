@@ -1,5 +1,5 @@
-use rand::distributions::uniform::SampleUniform;
-use rand::distributions::Standard;
+use rand::distr::uniform::SampleUniform;
+use rand::distr::StandardUniform;
 use rand::prelude::*;
 
 use crate::{
@@ -26,9 +26,9 @@ impl RandomStrategy for Sampler {
         func: F,
     ) -> Self::Functor<B>
     where
-        Standard: Distribution<R>,
+        StandardUniform: Distribution<R>,
     {
-        func(f, rng.gen())
+        func(f, rng.random())
     }
 
     #[inline]
@@ -39,9 +39,9 @@ impl RandomStrategy for Sampler {
         func: F,
     ) -> Self::Functor<B>
     where
-        Standard: Distribution<R>,
+        StandardUniform: Distribution<R>,
     {
-        func(f, rng.gen_range(range))
+        func(f, rng.random_range(range))
     }
 }
 

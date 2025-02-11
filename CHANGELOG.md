@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `rand-functors` now depends on version `0.9` of `rand`.
+- `isize` and `usize` no longer implement `RandomVariable`.
+
 ## [0.8.0] - 2024-05-16
 
 ### Added

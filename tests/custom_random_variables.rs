@@ -1,4 +1,4 @@
-use rand::distributions::Standard;
+use rand::distr::StandardUniform;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rand_functors::{Enumerator, Functor, RandomStrategy, RandomVariable};
@@ -6,17 +6,18 @@ use rand_functors::{Enumerator, Functor, RandomStrategy, RandomVariable};
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Pair<A: Clone + RandomVariable, B: Clone + RandomVariable>
 where
-    Standard: Distribution<A>,
-    Standard: Distribution<B>,
+    StandardUniform: Distribution<A>,
+    StandardUniform: Distribution<B>,
 {
     x: A,
     y: B,
 }
 
-impl<A: Clone + RandomVariable, B: Clone + RandomVariable> Distribution<Pair<A, B>> for Standard
+impl<A: Clone + RandomVariable, B: Clone + RandomVariable> Distribution<Pair<A, B>>
+    for StandardUniform
 where
-    Standard: Distribution<A>,
-    Standard: Distribution<B>,
+    StandardUniform: Distribution<A>,
+    StandardUniform: Distribution<B>,
 {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Pair<A, B> {
         Pair {
@@ -28,8 +29,8 @@ where
 
 impl<A: Clone + RandomVariable, B: Clone + RandomVariable> RandomVariable for Pair<A, B>
 where
-    Standard: Distribution<A>,
-    Standard: Distribution<B>,
+    StandardUniform: Distribution<A>,
+    StandardUniform: Distribution<B>,
 {
     fn sample_space() -> impl Iterator<Item = Self> {
         A::sample_space().flat_map(|a| B::sample_space().map(move |b| Pair { x: a.clone(), y: b }))
