@@ -43,7 +43,7 @@ fn test_flat_map_enumerator() {
         assert_eq!(counts[&i], 1);
     }
     for i in 200..=210 {
-        assert_eq!(counts[&i], 8)
+        assert_eq!(counts[&i], 8);
     }
 }
 
@@ -59,6 +59,6 @@ fn test_flat_map_counter() {
         assert_eq!(output[&i], 1);
     }
     for i in 200..=210 {
-        assert_eq!(output[&i], 8)
+        assert_eq!(output[&i], 8);
     }
 }

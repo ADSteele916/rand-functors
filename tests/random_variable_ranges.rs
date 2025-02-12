@@ -23,7 +23,7 @@ fn test_rand_range_population_sampler() {
     let mut rng = ChaCha8Rng::seed_from_u64(0);
     let d = random_process::<PopulationSampler<20>>(&mut rng, 40);
     assert_eq!(d.len(), 20);
-    assert!(d.iter().all(|d| (34..=40).any(|target| target == *d)))
+    assert!(d.iter().all(|d| (34..=40).any(|target| target == *d)));
 }
 
 #[test]
@@ -54,7 +54,7 @@ fn test_rand_range_unique_enumerator() {
     assert_eq!(d.len(), 7);
 
     for expected_possible_d in 34..=40 {
-        assert!(d.contains(&expected_possible_d))
+        assert!(d.contains(&expected_possible_d));
     }
 }
 
