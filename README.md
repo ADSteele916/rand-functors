@@ -4,7 +4,7 @@
 
 A motivating problem for this crate is the code duplication present across these two functions modelling the same random process:
 ```rust
-use rand::prelude::*;
+use rand::random;
 
 fn next_state(mut state: u8) -> u8 {
     state = state.wrapping_add(random());
@@ -26,14 +26,12 @@ This redundant implementation of the random process could pose issues during a r
 
 Using `rand-functors`, these two functions can be combined as:
 ```rust
-use rand::prelude::*;
+use rand::rng;
 use rand_functors::{Functor, RandomStrategy};
 
 fn next_state<S: RandomStrategy>(state: u8) -> S::Functor<u8> {
-    let mut out = S::fmap_rand(Functor::pure(state), &mut thread_rng(), |s, r| {
-        s.wrapping_add(r)
-    });
-    out = S::fmap_rand(out, &mut thread_rng(), |s, r| if r { s % 3 } else { s });
+    let mut out = S::fmap_rand(Functor::pure(state), &mut rng(), |s, r| s.wrapping_add(r));
+    out = S::fmap_rand(out, &mut rng(), |s, r| if r { s % 3 } else { s });
     out
 }
 ```
