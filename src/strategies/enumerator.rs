@@ -69,6 +69,23 @@ impl FlattenableRandomStrategy for Enumerator {
         f: Self::Functor<A>,
         func: F,
     ) -> Self::Functor<B> {
-        f.into_iter().flat_map(func).collect()
+        let children = f.into_iter().map(func).collect::<Self::Functor<_>>();
+        let Some(length_lcm) = children.iter().fold(None, |lcm, functor| {
+            if let Some(lcm) = lcm {
+                Some(num::integer::lcm(lcm, functor.len()))
+            } else {
+                Some(functor.len())
+            }
+        }) else {
+            return Self::Functor::new();
+        };
+        children
+            .into_iter()
+            .flat_map(|functor| {
+                let scaling = length_lcm / functor.len();
+                core::iter::repeat_n(functor, scaling)
+            })
+            .flatten()
+            .collect()
     }
 }

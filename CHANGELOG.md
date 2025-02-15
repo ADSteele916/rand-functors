@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The implementations of `FlattenableRandomStrategy` for `Enumerator` and `Counter` now maintain proportionality.
+
 ## [0.9.0] - 2025-02-11
 
 ### Changed

@@ -3,7 +3,8 @@ use std::collections::HashMap;
 use std::hash::BuildHasher;
 use std::marker::PhantomData;
 
-use num_traits::{NumAssign, Unsigned};
+use num::traits::{NumAssign, Unsigned};
+use num::Integer;
 use rand::distr::uniform::SampleUniform;
 use rand::distr::StandardUniform;
 use rand::prelude::*;
@@ -86,8 +87,8 @@ impl<S: BuildHasher + Default, N: Clone + Default + NumAssign + Unsigned> Random
     }
 }
 
-impl<S: BuildHasher + Default, N: Clone + Default + NumAssign + Unsigned> FlattenableRandomStrategy
-    for Counter<S, N>
+impl<S: BuildHasher + Default, N: Clone + Default + Integer + NumAssign + Unsigned>
+    FlattenableRandomStrategy for Counter<S, N>
 {
     #[inline]
     fn fmap_flat<A: Inner, B: Inner, F: FnMut(A) -> Self::Functor<B>>(
@@ -97,12 +98,32 @@ impl<S: BuildHasher + Default, N: Clone + Default + NumAssign + Unsigned> Flatte
         let mut new_functor = Self::Functor::with_capacity_and_hasher(f.len(), Default::default());
         let children = f
             .into_iter()
-            .map(|(i, count)| (func(i), count))
+            .map(|(i, outer_count)| {
+                let functor = func(i);
+                let inner_count_sum = functor
+                    .values()
+                    .fold(N::zero(), |sum, inner_count| sum + inner_count.clone());
+                (functor, outer_count, inner_count_sum)
+            })
             .collect::<Vec<_>>();
-        for (child, outer_count) in children {
+        let Some(inner_count_lcm) =
+            children
+                .iter()
+                .fold(None, |lcm: Option<N>, (_, _, inner_count_sum)| {
+                    if let Some(lcm) = lcm {
+                        Some(num::integer::lcm(lcm, inner_count_sum.clone()))
+                    } else {
+                        Some(inner_count_sum.clone())
+                    }
+                })
+        else {
+            return new_functor;
+        };
+        for (child, outer_count, inner_count_sum) in children {
+            let scaling = inner_count_lcm.clone() / inner_count_sum;
             for (output, inner_count) in child {
                 *new_functor.entry(output).or_insert(N::zero()) +=
-                    inner_count * outer_count.clone();
+                    scaling.clone() * inner_count * outer_count.clone();
             }
         }
         new_functor
