@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2025-02-15
+
 ### Changed
 
 - The implementations of `FlattenableRandomStrategy` for `Enumerator` and `Counter` now maintain proportionality.
@@ -112,7 +114,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `Enumerator` strategy, which creates a `Vec` of all possible outputs of a random process.
 - The `Counter` strategy, which creates a `HashMap` of all possible outputs of a random process and counts of their of occurrences.
 
-[unreleased]: https://github.com/ADSteele916/rand-functors/compare/v0.9.0...HEAD
+[unreleased]: https://github.com/ADSteele916/rand-functors/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/ADSteele916/rand-functors/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/ADSteele916/rand-functors/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/ADSteele916/rand-functors/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/ADSteele916/rand-functors/compare/v0.6.0...v0.7.0
