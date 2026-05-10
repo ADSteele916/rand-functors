@@ -57,7 +57,6 @@
 //! custom data type.
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#![warn(clippy::cargo)]
 #![warn(missing_docs)]
 
 #[cfg(feature = "alloc")]
